@@ -8,7 +8,9 @@
     "dev": "nodemon src/index.js",
     "build": "tsc",
     "lint": "eslint . --ext .ts",
-    "test": "mocha --require ts-node/register test/**/*.ts"
+    "test": "mocha --require ts-node/register test/**/*.ts",
+    "dev:env": "cross-env NODE_ENV=development nodemon src/index.ts",
+    "prod:env": "cross-env NODE_ENV=production node dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -43,7 +45,8 @@
     "dotenv": "^8.2.0",
     "axios": "^0.21.1",
     "morgan": "^1.10.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3"
   },
   "devDependencies": {
     "typescript": "^4.1.3",
