@@ -1,20 +1,34 @@
-# Node.js
+# Node modules
 node_modules/
 
+# TypeScript compiled output
+dist/
+build/
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env.*
+.env.*.local
+
+# Debugger settings
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# TypeScript specific
+*.tsbuildinfo
 
 # Optional npm cache directory
-.npm
+.npm/
 
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Environment variables
-.env*
-.DS_Store
+# Jest coverage directory
+coverage/
