@@ -10,7 +10,7 @@ if (process.env.NODE_ENV === 'production') {
   dotenv.config({ path: '.env.dev' });
 }
 
-(async function () {
+async function initializeDB() {
   let options: PostgresConnectionOptions = {
     type: 'postgres',
     host: process.env.DB_HOST,
@@ -23,7 +23,7 @@ if (process.env.NODE_ENV === 'production') {
     logging: process.env.NODE_ENV === 'development' ? true : false,
     namingStrategy: new SnakeNamingStrategy(),
   }
-  await createConnection(options).then(() => {
-    console.log("Database connection established successfully :"+ process.env.PORT);
-  }).catch(error => console.log(error));
-})();
+  return await createConnection(options);
+};
+
+export {initializeDB};

@@ -1,10 +1,9 @@
-
-import { Router } from 'express';
-import authController from '../controllers/authController';
-
-const router = Router();
-
-router.post('/login', authController.login);
-router.post('/register', authController.register);
-
-export default router;
+import express from "express";
+import { signup } from "../api/auth/authController";
+import { createBuildInfoEndpoint } from "build-genie";
+export default function () {
+  const routes = express.Router();
+  routes.use("/auth", require("@api/auth"));
+  routes.get("/version", createBuildInfoEndpoint("./dist/build-info.json"));
+  return routes;
+}
