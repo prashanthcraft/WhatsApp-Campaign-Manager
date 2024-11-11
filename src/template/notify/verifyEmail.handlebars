@@ -1,0 +1,22 @@
+{{> header}}
+<div class="content" style="padding: 20px;">
+    <div style="text-align: center; padding: 20px;">
+        <h1 {{> @root.headerStyle}}>Welcome to Aimingle!</h1>
+        <h3 {{> @root.subheaderStyle}}>Your Journey Begins Here</h3>
+        <p {{> @root.paragraphStyle}}>We're excited to have you onboard. Let's get you verified and ready to explore!
+        </p>
+    </div>
+    <p {{> @root.paragraphStyle}}>
+        Thank you for joining Aimingle, where connections and opportunities come together!
+    </p>
+    <p {{> @root.paragraphStyle}}>
+        Please verify your email address to activate your account and start exploring.
+    </p>
+    <p style="text-align: center;">
+        <a href="${verificationLink}" {{> @root.buttonStyle}}>Verify Your Email</a>
+    </p>
+    <p {{> @root.paragraphStyle}}>
+        If you didn't sign up for Aimingle, please ignore this email.
+    </p>
+</div>
+{{> footer}}

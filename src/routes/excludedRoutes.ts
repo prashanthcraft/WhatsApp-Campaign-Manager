@@ -1,1 +1,1 @@
-export const excludedRoutes = ["/version", "/sign_up"];
+export const excludedRoutes = ["/version", "/auth/sign-up"];
