@@ -1,22 +1,24 @@
-import "module-alias/register";
-import express, { NextFunction, Request, Response } from "express";
-import compression from "compression";
-import bodyParser from "body-parser";
-import cors from "cors";
-import { runWithAppContext } from "@utils/requestContext";
-import logger, { logError } from "@utils/logger";
-import { initializeDB } from "@config/database";
-import { authenticate } from "@middlewares/authMiddleware";
-import routes from "./routes";
-import { appConfig } from "@config/app";
-import { APIError } from "rest-api-errors";
-import { logRequest } from "@middlewares/audit.middleware";
-import { checkMaintenanceMode } from "@middlewares/maintenance";
-import { excludedRoutes } from "./routes/excludedRoutes";
-import requireTenantAccess from "@middlewares/requireTenant";
+import { initializeDB } from '@config/database';
+import { logRequest } from '@middlewares/audit.middleware';
+import { authenticate } from '@middlewares/authMiddleware';
+import { checkMaintenanceMode } from '@middlewares/maintenance';
+import requireTenantAccess from '@middlewares/requireTenant';
+import logger, { logError } from '@utils/logger';
+import { runWithAppContext } from '@utils/requestContext';
+import bodyParser from 'body-parser';
+import compression from 'compression';
+import cors from 'cors';
+import express, { NextFunction, Request, Response } from 'express';
+import 'module-alias/register';
+import { APIError } from 'rest-api-errors';
+
+import { appConfig } from './config/appConfig';
+import routes from './routes';
+import { excludedRoutes } from './routes/excludedRoutes';
 
 const { baseRoutePrefix } = appConfig;
-const { version, name } = require("../package.json");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version, name } = require('../package.json');
 
 const app = express();
 const excludeMaintenanceUrl: string[] = [];
@@ -26,15 +28,15 @@ app.use(compression());
 
 // Parse incoming request bodies.
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json({ limit: "25mb" }));
+app.use(bodyParser.json({ limit: '25mb' }));
 
 // Enable Cross-Origin Resource Sharing (CORS) for all requests.
 app.use(cors({ origin: true }));
 
 // Set custom headers for all responses.
 app.use((req, resp, next) => {
-  resp.header("x-powered-by", `Aimingle v${version}`);
-  resp.header("x-version", version);
+  resp.header('x-powered-by', `Aimingle v${version}`);
+  resp.header('x-version', version);
   next();
 });
 
@@ -47,16 +49,16 @@ app.use(authenticate);
 app.use(
   checkMaintenanceMode(
     excludeMaintenanceUrl.map((path) =>
-      baseRoutePrefix ? `${baseRoutePrefix}${path}` : path
-    )
-  )
+      baseRoutePrefix ? `${baseRoutePrefix}${path}` : path,
+    ),
+  ),
 );
 app.use(
   requireTenantAccess(
     excludedRoutes.map((path) =>
-      baseRoutePrefix ? `${baseRoutePrefix}${path}` : path
-    )
-  )
+      baseRoutePrefix ? `${baseRoutePrefix}${path}` : path,
+    ),
+  ),
 );
 app.use(logRequest);
 
@@ -73,10 +75,10 @@ app.use((req, res, next) => {
 });
 
 // Handle 404 errors for any unmatched route.
-app.all("*", (req, resp) => {
+app.all('*', (req, resp) => {
   resp.status(404).send({
     path: req.path,
-    code: "unknown_endpoint",
+    code: 'unknown_endpoint',
     method: req.method,
   });
 });
@@ -87,7 +89,7 @@ app.all("*", (req, resp) => {
  */
 app.use((err: unknown, req: Request, resp: Response, next: NextFunction) => {
   const id = Date.now().toString(36).toUpperCase();
-  let traceId = "";
+  let traceId = '';
 
   // Extract trace ID if available (useful for distributed tracing).
   const globalTrace: any = global;
@@ -114,11 +116,11 @@ app.use((err: unknown, req: Request, resp: Response, next: NextFunction) => {
   } else {
     // Handle unexpected errors.
     logError(`api_error:${id}:unexpected`, err);
-    logger.error("error: ", err);
+    logger.error('error: ', err);
 
     resp.status(500).send({
       id,
-      code: "unknown_error",
+      code: 'unknown_error',
       traceId,
     });
   }
@@ -129,21 +131,31 @@ app.use((err: unknown, req: Request, resp: Response, next: NextFunction) => {
  */
 (async () => {
   try {
-    logger.debug("Initializing the database connection...");
-    await initializeDB();
-    logger.debug("Database connection established, starting the server...");
+    logger.debug('Initializing the database connection...');
+    await initializeDB()
+      .then((connection) => {
+        logger.debug(
+          'Entities:',
+          connection.entityMetadatas.map((meta) => meta.name),
+        );
+        logger.debug('Database connection initialized successfully');
+      })
+      .catch((err) => {
+        logger.error('Failed to initialize the database', err);
+      });
+    logger.debug('Database connection established, starting the server...'); 
 
     const port = Number(process.env.PORT || appConfig.port || 8080);
     app.listen(port, () => {
       logger.info(
         `${name} is listening on http://0.0.0.0:${port}${
-          appConfig.baseRoutePrefix || ""
-        }`
+          appConfig.baseRoutePrefix || ''
+        }`,
       );
     });
   } catch (error) {
     // Log any errors during the initialization process.
-    logError("Failed to initialize the database", error);
+    logError('Failed to initialize the database', error);
     process.exit(1); // Exit the process if initialization fails.
   }
 })();

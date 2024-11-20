@@ -1,7 +1,7 @@
+import { firebaseAuth } from '@config/firebaseConfig';
+import { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { Request, Response } from 'express';
-import { firebaseAuth } from '@config/firebaseConfig';
 
 interface CustomRequest extends Request {
   user?: any;
@@ -17,16 +17,22 @@ export const heartbeat = async (req: CustomRequest, res: Response) => {
     const loginType = req.header('X-Login-Type'); // 'google' or 'credentials'
 
     if (!authHeader) {
-      return res.status(401).json({ message: 'Access denied. No token provided.' });
+      return res
+        .status(401)
+        .json({ message: 'Access denied. No token provided.' });
     }
 
     if (!loginType) {
-      return res.status(400).json({ message: 'Access denied. No login type provided.' });
+      return res
+        .status(400)
+        .json({ message: 'Access denied. No login type provided.' });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ message: 'Access denied. Malformed authorization header.' });
+      return res
+        .status(401)
+        .json({ message: 'Access denied. Malformed authorization header.' });
     }
 
     let user;
@@ -59,7 +65,7 @@ export const heartbeat = async (req: CustomRequest, res: Response) => {
     }
 
     // Determine user activity state (active or idle) from query parameter
-    const userActivityState = req.query.userActivityState as string || 'idle'; // Expecting 'active' or 'idle' from client
+    const userActivityState = (req.query.userActivityState as string) || 'idle'; // Expecting 'active' or 'idle' from client
 
     // Calculate session timeout (e.g., remaining time before expiration)
     const sessionToTimeout = isGoogleToken ? 3600 : 3600; // In seconds, adjust based on actual token expiry logic
@@ -67,11 +73,18 @@ export const heartbeat = async (req: CustomRequest, res: Response) => {
 
     // Refresh the token if user is active and the session is nearing expiration (e.g., less than 10 minutes remaining)
     if (userActivityState === 'active') {
-      const decoded = jwt.decode(token, { complete: true }) as { payload: JwtPayload } | null;
+      const decoded = jwt.decode(token, { complete: true }) as {
+        payload: JwtPayload;
+      } | null;
       const exp = decoded?.payload?.exp;
       const currentTime = Math.floor(Date.now() / 1000);
-      if (exp && exp - currentTime < 600) { // Less than 10 minutes remaining
-        newToken = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '1h' });
+      if (exp && exp - currentTime < 600) {
+        // Less than 10 minutes remaining
+        newToken = jwt.sign(
+          { id: user.id, email: user.email, name: user.name },
+          JWT_SECRET,
+          { expiresIn: '1h' },
+        );
       }
     }
 

@@ -1,22 +1,22 @@
-import { User, UserRole } from "@aimingle/entity";
-import { mailConfig } from "@config/email";
-import logger, { logError } from "@utils/logger";
-import { RequestContext } from "@utils/requestContext";
-import { getAuth, UserRecord } from "firebase-admin/auth";
-import { VerificationService } from "services";
-import { getRepository } from "typeorm";
+import { User, UserRole } from '@aimingle/entity';
+import { mailConfig } from '@config/email';
+import logger, { logError } from '@utils/logger';
+import { RequestContext } from '@utils/requestContext';
+import { UserRecord, getAuth } from 'firebase-admin/auth';
+import { VerificationService } from 'services';
+import { getRepository } from 'typeorm';
 
 export interface CreateUserOptions {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
-  requireEmailVerification?: boolean
+  requireEmailVerification?: boolean;
   companyId?: number;
   teamId?: number;
   role: UserRole;
   phone?: string;
-  settings?: object;
+  settings?: Record<string, unknown>;
   requireApproval?: boolean;
 }
 
@@ -25,15 +25,15 @@ export interface NewUserInfo {
   fbUser: UserRecord;
 }
 export async function createUser(
-  options: CreateUserOptions
+  options: CreateUserOptions,
 ): Promise<NewUserInfo> {
-  logger.debug("Creating User with props ", {
+  logger.debug('Creating User with props ', {
     ...options,
-    password: "**************",
+    password: '**************',
   });
   let uid;
   try {
-    let {
+    const {
       email: rawEmail,
       password,
       firstName,
@@ -43,71 +43,69 @@ export async function createUser(
     } = options;
 
     const email = rawEmail.toLowerCase();
-    logger.debug("creating firebase user for ", email);
+    logger.debug('creating firebase user for ', email);
     const fbUser = await getAuth().createUser({
       email,
       password,
       emailVerified: requireEmailVerification === false,
     });
     uid = fbUser?.uid;
-    await getAuth().setCustomUserClaims(uid, { companyId: companyId});
-
+    await getAuth().setCustomUserClaims(uid, { companyId: companyId });
     logger.debug(`created firebase user for ${email}`, { fbUser });
 
-
-    logger.debug(`createUser: ${email}: creating the user`);
-    
+    logger.debug(
+      `createUser: ${email}: creating the user Record on Aimingle Database`,
+    );
     const userRepo = getRepository(User);
-    
+
     const newUserPayload = {
-        firebaseUid: uid,
-        tenantId: RequestContext.getTenantId() ?? 0,
-        email,
-        firstName,
-        lastName,
-        companyId: RequestContext.getCompany()?.id ?? 0,
-        requirePasswordReset: false,
-        photoUrl: fbUser.photoURL ?? ""
+      firebaseUid: uid,
+      tenantId: RequestContext.getTenantId() ?? 0,
+      email,
+      firstName,
+      lastName,
+      companyId: RequestContext.getCompany()?.id ?? 0,
+      requirePasswordReset: false,
+      photoUrl: fbUser.photoURL ?? '',
     };
-    
+
     const aimingleUser = await userRepo.save(newUserPayload);
-    
-    logger.debug(`createUser: ${email}: Created Signup user`, {aimingleUser});
 
-    if(requireEmailVerification && !mailConfig.disableSignUpVerification) {
-        logger.debug(`createUSer: initiating email verification for > ${email}`);
-        VerificationService.createEmailVerification(aimingleUser).catch(err => logError(`createEmailVerification: ${email} delivery failed`, err));
+    logger.debug(`createUser: ${email}: Created Signup user on Database`, {
+      aimingleUser,
+    });
+
+    if (requireEmailVerification && !mailConfig.disableSignUpVerification) {
+      logger.debug(`createUSer: initiating email verification for > ${email}`);
+      VerificationService.createEmailVerification(aimingleUser).catch((err) =>
+        logError(`createEmailVerification: ${email} delivery failed`, err),
+      );
     } else {
-        logger.debug(`createUser: Sign-up Email Verification skipped for ${email}`);
-        await VerificationService.verifyUser(aimingleUser.id);
+      logger.debug(
+        `createUser: Sign-up Email Verification skipped for ${email}`,
+      );
+      await VerificationService.verifyUser(aimingleUser.id);
     }
-
 
     return {
-        aimUser: aimingleUser,
-        fbUser
-    }
-
-    
+      aimUser: aimingleUser,
+      fbUser,
+    };
   } catch (error) {
     logError('Error in signUp', error);
-    if((error as any).code === "auth/email-already-exists"){
-        throw new DuplicateMailError();
-    } else if ((error as any).code === "auth/invalid-password") {
-        throw new InvalidPasswordError();
+    if ((error as any).code === 'auth/email-already-exists') {
+      throw new DuplicateMailError();
+    } else if ((error as any).code === 'auth/invalid-password') {
+      throw new InvalidPasswordError();
     } else {
-        if(uid) {
-            await getAuth().deleteUser(uid);
-        }
-        throw (error);
+      if (uid) {
+        await getAuth().deleteUser(uid);
+      }
+      throw error;
     }
   }
 }
 
-export class InvalidPasswordError extends Error {
+export class InvalidPasswordError extends Error {}
 
-}
-
-export class DuplicateMailError extends Error {
-
-}
+export class DuplicateMailError extends Error {}

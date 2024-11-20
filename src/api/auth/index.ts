@@ -1,6 +1,8 @@
-import { Router } from "express";
-import * as authController from './authController'; 
-import { heartbeat } from "./heartbeat";
+import { Router } from 'express';
+
+import * as authController from './authController';
+import { heartbeat } from './heartbeat';
+
 const router = Router();
 
 router.post('/sign-up', authController.signup);

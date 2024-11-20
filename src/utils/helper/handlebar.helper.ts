@@ -1,19 +1,22 @@
-import expressHandleBars from "express-handlebars";
-import { helper } from "./template.helper";
-import * as Handlebars from "handlebars";
+import expressHandleBars from 'express-handlebars';
+import * as Handlebars from 'handlebars';
+
+import { helper } from './template.helper';
 
 export async function renderHandlebarTemplate(
   filepath: string,
-  contentParams: any = {}
+  contentParams: any = {},
 ) {
   const hbs = expressHandleBars.create({
     helpers: helper,
-    partialsDir: ["template/partials/"],
-    layoutsDir: "template/layouts/",
+    partialsDir: ['template/partials/'],
+    layoutsDir: 'template/layouts/',
     handlebars: Handlebars,
   });
   let output = await hbs.renderView(filepath, contentParams);
-//   output = new Handlebars.SafeString(output);
+  //   output = new Handlebars.SafeString(output);
   return output;
 }
-Handlebars.registerHelper("inc", function (value, options){return parseInt(value) + 1});
+Handlebars.registerHelper('inc', function (value, options) {
+  return parseInt(value) + 1;
+});

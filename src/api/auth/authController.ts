@@ -1,15 +1,17 @@
 // src/controllers/authController.ts
-import { Request, Response } from "express";
-import { firebaseAuth } from "@config/firebaseConfig";
-import { getRepository } from "typeorm";
-import { User, UserRole } from "@aimingle/entity"; // Assuming this is the correct import for the User entity
-import { validatePhoneNumber } from "@utils/phone.utils";
-import { BadRequestError, DuplicateError } from "rest-api-errors";
-import isValidEmail from "@utils/email.utils";
-import { CompanyService, UserService } from "services";
-import logger from "@utils/logger";
-import { initializeNewTenant } from "services/tenant.service";
-import { RequestContext } from "@utils/requestContext";
+import { UserRole } from '@aimingle/entity';
+// import { firebaseAuth } from '@config/firebaseConfig';
+import isValidEmail from '@utils/email.utils';
+import logger from '@utils/logger';
+// Assuming this is the correct import for the User entity
+import { validatePhoneNumber } from '@utils/phone.utils';
+import { RequestContext } from '@utils/requestContext';
+import { Request, Response } from 'express';
+import { BadRequestError, DuplicateError } from 'rest-api-errors';
+import { CompanyService, UserService } from 'services';
+import { initializeNewTenant } from 'services/tenant.service';
+
+// import { getRepository } from 'typeorm';
 
 // Define the request body structure using an interface
 interface SignupRequestBody {
@@ -26,7 +28,7 @@ interface SignupRequestBody {
 // Signup Logic
 export const signup = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const {
@@ -38,20 +40,20 @@ export const signup = async (
       phone,
     }: SignupRequestBody = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !companyName) {
       return res.status(400).json({
-        code: "missing_required_fields",
-        message: "Missing Required Fields",
+        code: 'missing_required_fields',
+        message: 'Missing Required Fields',
       });
     }
 
     await validateSignUpRequest(email);
-    let requireEmailVerification = true;
+    const requireEmailVerification = true;
 
     // Todo: Need to add multi tenancy email verification here
 
     logger.debug(`signUp: ${email}: Creating new company: ${companyName}`);
-    const company = await CompanyService.createCompany({ name: companyName! });
+    const company = await CompanyService.createCompany({ name: companyName });
     const companyId = company.id;
     logger.debug(`signUp: ${email}: Created new company: ${companyName}`);
 
@@ -85,11 +87,11 @@ export const signup = async (
       requireEmailVerification,
     });
 
-    
+    logger.debug(`Created User on DB ${aimUser} and Firebase Status ${fbUser}`);
 
     // Respond with user info
     return res.status(200).json({
-      status: "success",
+      status: 'success',
       user: {
         email: aimUser.email,
         firstName: aimUser.firstName,
@@ -98,8 +100,8 @@ export const signup = async (
       },
     });
   } catch (error) {
-    console.error("Error during signup: ", error);
-    return res.status(401).json({ message: "Unauthorized", error });
+    console.error('Error during signup: ', error);
+    return res.status(401).json({ message: 'Unauthorized', error });
   }
 };
 
@@ -107,23 +109,23 @@ const validateSignUpRequest = async (email: string, phone?: string) => {
   if (phone) {
     const isValidPhoneNumber = validatePhoneNumber(phone);
     if (!isValidPhoneNumber) {
-      throw new BadRequestError("invalid_phone_number");
+      throw new BadRequestError('invalid_phone_number');
     }
   }
 
   const invalidReason = await isValidEmail(email);
 
-  if (invalidReason === "duplicate") {
-    throw new DuplicateError("duplicate_email");
+  if (invalidReason === 'duplicate') {
+    throw new DuplicateError('duplicate_email');
   }
 
-  if (invalidReason === "bad_address") {
-    throw new BadRequestError("invalid_email");
+  if (invalidReason === 'bad_address') {
+    throw new BadRequestError('invalid_email');
   }
 
   if (
-    typeof invalidReason !== "boolean" &&
-    invalidReason.startsWith("domain_restricted")
+    typeof invalidReason !== 'boolean' &&
+    invalidReason.startsWith('domain_restricted')
   ) {
     throw new BadRequestError(invalidReason);
   }

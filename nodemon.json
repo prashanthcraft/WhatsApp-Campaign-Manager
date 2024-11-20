@@ -2,5 +2,5 @@
     "watch": ["src"],
     "ext": "ts,json",
     "ignore": ["src/**/*.spec.ts"],
-    "exec": "tsc && node dist/server.js"
+    "exec": "tsc && ts-node -r tsconfig-paths/register dist/server.js"
 }

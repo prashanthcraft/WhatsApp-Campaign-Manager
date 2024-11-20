@@ -1,7 +1,9 @@
+import { loggingConfig } from '@config/logging';
 import { createLogger, format, transports } from 'winston';
 import 'winston-daily-rotate-file';
+
 import { RequestContext } from './requestContext';
-import { loggingConfig } from '@config/logging';
+
 const { version } = require('../../package.json');
 
 // Define log formats
@@ -18,27 +20,41 @@ const winstonLogger = createLogger({
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     errors({ stack: true }), // log the full stack trace for errors
-    customFormat
+    customFormat,
   ),
-  transports: [] // Transports will be added conditionally to avoid duplication
+  transports: [], // Transports will be added conditionally to avoid duplication
 });
 
 // Add transports only if they haven't been added already
 if (!winstonLogger.transports.some((t) => t instanceof transports.Console)) {
-  winstonLogger.add(new transports.Console({
-    format: combine(colorize(), customFormat),
-  }));
+  winstonLogger.add(
+    new transports.Console({
+      format: combine(colorize(), customFormat),
+    }),
+  );
 }
 
-if (!winstonLogger.transports.some((t) => t instanceof transports.File && t.filename === 'logs/error.log')) {
-  winstonLogger.add(new transports.File({ filename: 'logs/error.log', level: 'error' }));
+if (
+  !winstonLogger.transports.some(
+    (t) => t instanceof transports.File && t.filename === 'logs/error.log',
+  )
+) {
+  winstonLogger.add(
+    new transports.File({ filename: 'logs/error.log', level: 'error' }),
+  );
 }
 
-if (!winstonLogger.transports.some((t) => t instanceof transports.File && t.filename === 'logs/combined.log')) {
+if (
+  !winstonLogger.transports.some(
+    (t) => t instanceof transports.File && t.filename === 'logs/combined.log',
+  )
+) {
   winstonLogger.add(new transports.File({ filename: 'logs/combined.log' }));
 }
 
-if (!winstonLogger.transports.some((t) => t instanceof transports.DailyRotateFile)) {
+if (
+  !winstonLogger.transports.some((t) => t instanceof transports.DailyRotateFile)
+) {
   winstonLogger.add(
     new transports.DailyRotateFile({
       filename: 'logs/application-%DATE%.log',
@@ -46,7 +62,7 @@ if (!winstonLogger.transports.some((t) => t instanceof transports.DailyRotateFil
       zippedArchive: true,
       maxSize: '20m',
       maxFiles: '14d',
-    })
+    }),
   );
 }
 
@@ -142,7 +158,7 @@ function appendSource(payload: any): Record<string, any> | undefined {
 
 export function logError(
   errorOrMessage: Error | string | unknown,
-  error?: Error | unknown
+  error?: Error | unknown,
 ): void {
   const message =
     typeof errorOrMessage === 'string' ? errorOrMessage : 'unknown_error';

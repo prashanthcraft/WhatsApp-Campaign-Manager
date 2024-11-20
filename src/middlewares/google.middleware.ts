@@ -1,20 +1,28 @@
+import { NextFunction, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
-import { Request, Response, NextFunction } from 'express';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Middleware for verifying Google ID Token
-export const googleAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const googleAuthMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     // Extract the token from the Authorization header
     const authHeader = req.header('Authorization');
     if (!authHeader) {
-      return res.status(401).json({ message: 'Access denied. No token provided.' });
+      return res
+        .status(401)
+        .json({ message: 'Access denied. No token provided.' });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ message: 'Access denied. Malformed authorization header.' });
+      return res
+        .status(401)
+        .json({ message: 'Access denied. Malformed authorization header.' });
     }
 
     // Verify the token using Google Auth Library

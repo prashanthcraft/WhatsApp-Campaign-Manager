@@ -1,6 +1,6 @@
-import logger from "@utils/logger";
-import { NextFunction, Request, Response } from "express";
-import { pathToRegexp } from "path-to-regexp";
+import logger from '@utils/logger';
+import { NextFunction, Request, Response } from 'express';
+import { pathToRegexp } from 'path-to-regexp';
 
 export function checkMaintenanceMode(excludedPaths: string[] = []) {
   const { regexp } = pathToRegexp(excludedPaths);
@@ -12,16 +12,16 @@ export function checkMaintenanceMode(excludedPaths: string[] = []) {
     try {
       const maintenanceModeStatus = await getMaintenanceStatus();
       if (maintenanceModeStatus) {
-        resp.status(503).send({ code: "maintenance_mode" });
+        resp.status(503).send({ code: 'maintenance_mode' });
       }
     } catch (error) {
-      logger.error("maintenance status: ", error);
+      logger.error('maintenance status: ', error);
     }
     next();
   };
 }
 /**
- * Todo: Update the status to a service that will be consumed by firestore remote config 
+ * Todo: Update the status to a service that will be consumed by firestore remote config
  * @returns MaintenanceModeStatus
  */
 const getMaintenanceStatus = async (): Promise<Boolean> => {

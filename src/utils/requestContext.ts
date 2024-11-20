@@ -1,8 +1,9 @@
-import { AsyncLocalStorage } from "async_hooks";
-import { NextFunction, Request, Response } from "express";
-import { nanoid } from "nanoid";
-import { fromTenantIdHash } from "./hashids";
-import { User, Tenant, TenantCompany } from "@aimingle/entity";
+import { Tenant, TenantCompany, TenantTeam, User } from '@aimingle/entity';
+import { AsyncLocalStorage } from 'async_hooks';
+import { NextFunction, Request, Response } from 'express';
+import { nanoid } from 'nanoid';
+
+import { fromTenantIdHash } from './hashids';
 
 type ContextUser = User;
 type ContextValue = {
@@ -13,47 +14,51 @@ type ContextValue = {
   executionId?: string;
   isImpersonated?: boolean;
   emailVerified?: boolean;
+  team?: TenantTeam;
 };
 const context: AsyncLocalStorage<ContextValue> = new AsyncLocalStorage();
 export const RequestContext = {
   getValue<T extends keyof ContextValue>(
     key: T,
-    defaultValue?: ContextValue[T]
+    defaultValue?: ContextValue[T],
   ): ContextValue[T] | undefined {
     const store: any = context.getStore();
     return store?.[key] ?? defaultValue;
   },
   getTenantId(): number | undefined {
-    return this.getValue("tenantId");
+    return this.getValue('tenantId');
   },
   getUser(): ContextUser | undefined {
-    return this.getValue("user");
+    return this.getValue('user');
   },
   getCompany(): TenantCompany | undefined {
-    return this.getValue("company");
+    return this.getValue('company');
+  },
+  getTenantTeam(): TenantTeam | undefined {
+    return this.getValue('team');
   },
   getTenant(): Tenant | undefined {
-    return this.getValue("tenant");
+    return this.getValue('tenant');
   },
   isImpersonated(): boolean | undefined {
-    return this.getValue("isImpersonated");
+    return this.getValue('isImpersonated');
   },
   isEmailVerified(): boolean | undefined {
-    return this.getValue("emailVerified");
+    return this.getValue('emailVerified');
   },
   getExecutionId(): string | undefined {
-    return this.getValue("executionId");
+    return this.getValue('executionId');
   },
-  setValue<T extends keyof Omit<ContextValue, "tenantId">>(
+  setValue<T extends keyof Omit<ContextValue, 'tenantId'>>(
     key: T,
-    value: ContextValue[T]
+    value: ContextValue[T],
   ): void {
     const store: any = context.getStore();
     if (store) {
       store[key] = value;
     }
   },
-  setValues(values: Partial<Omit<ContextValue, "tenantId">>): void {
+  setValues(values: Partial<Omit<ContextValue, 'tenantId'>>): void {
     const store: any = context.getStore();
     if (store) {
       Object.assign(values);
@@ -63,17 +68,17 @@ export const RequestContext = {
 export function runWithAppContext(
   req: Request,
   resp: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
-  const tenantId = req.header("x-tenant-id");
-  const executionId = req.header("function-execution-id") ?? nanoid();
+  const tenantId = req.header('x-tenant-id');
+  const executionId = req.header('function-execution-id') ?? nanoid();
 
   context.run(
     {
       tenantId: fromTenantIdHash(tenantId),
       executionId,
     },
-    next
+    next,
   );
 }
 
